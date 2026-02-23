@@ -94,13 +94,26 @@ const genuineFindings: Finding[] = [
   },
 ];
 
+function randomize(base: number, range: number): number {
+  return Math.min(99, Math.max(50, base + Math.floor(Math.random() * range * 2 - range)));
+}
+
+function randomizeFindings(findings: Finding[]): Finding[] {
+  const count = Math.max(3, Math.floor(Math.random() * findings.length) + 2);
+  const shuffled = [...findings].sort(() => Math.random() - 0.5).slice(0, count);
+  return shuffled.map(f => ({
+    ...f,
+    confidence: randomize(f.confidence, 10),
+  }));
+}
+
 export function simulateAnalysis(
   fileName: string,
   fileSize: number,
   onProgress: (progress: number, layer: string, layers: { name: string; status: "pending" | "running" | "done" | "warning" | "error" }[]) => void,
   onComplete: (result: AnalysisResult) => void
 ) {
-  const isForged = Math.random() > 0.4; // 60% chance forged for demo
+  const isForged = Math.random() > 0.4;
   const layerNames = ["Metadata", "Signature", "Structure", "Content", "Visual"];
   const layers = layerNames.map((name) => ({ name, status: "pending" as const }));
 
@@ -131,16 +144,20 @@ export function simulateAnalysis(
       });
       onProgress(100, "Complete", finalLayers);
 
+      const randomizedFindings = randomizeFindings(isForged ? forgedFindings : genuineFindings);
+      const overallConfidence = isForged ? randomize(89, 7) : randomize(94, 5);
+      const duration = (2.5 + Math.random() * 3).toFixed(1) + "s";
+
       setTimeout(() => {
         onComplete({
           verdict: isForged ? "forged" : "genuine",
-          overallConfidence: isForged ? 91 : 96,
-          findings: isForged ? forgedFindings : genuineFindings,
+          overallConfidence,
+          findings: randomizedFindings,
           metadata: {
             fileName,
             fileSize: `${(fileSize / 1024).toFixed(1)} KB`,
             analyzedAt: new Date().toLocaleTimeString(),
-            duration: "3.4s",
+            duration,
           },
         });
       }, 600);
