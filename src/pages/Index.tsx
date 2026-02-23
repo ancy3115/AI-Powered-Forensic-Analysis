@@ -7,6 +7,7 @@ import AnalysisDashboard, { AnalysisResult } from "@/components/AnalysisDashboar
 import FeatureGrid from "@/components/FeatureGrid";
 import { simulateAnalysis } from "@/lib/mockAnalysis";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 type AppState = "idle" | "analyzing" | "results";
 
@@ -23,8 +24,7 @@ const Index = () => {
     setResult(null);
 
     cancelRef.current = simulateAnalysis(
-      file.name,
-      file.size,
+      file,
       (prog, layer, updatedLayers) => {
         setProgress(prog);
         setCurrentLayer(layer);
@@ -33,6 +33,10 @@ const Index = () => {
       (analysisResult) => {
         setResult(analysisResult);
         setState("results");
+      },
+      (error) => {
+        toast.error(error);
+        setState("idle");
       }
     );
   };
